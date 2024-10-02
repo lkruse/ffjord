@@ -6,6 +6,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch
 
+import glob
+from PIL import Image
 
 def standard_normal_logprob(z):
     logZ = -0.5 * math.log(2 * math.pi)
@@ -82,7 +84,7 @@ def save_trajectory(model, data_samples, savedir, ntimes=101, memory=0.01, devic
                 ax.set_xlim(-4, 4)
                 ax.set_ylim(-4, 4)
                 cmap = matplotlib.cm.get_cmap(None)
-                ax.set_axis_bgcolor(cmap(0.))
+                ax.set_facecolor(cmap(0.))
                 ax.invert_yaxis()
                 ax.get_xaxis().set_ticks([])
                 ax.get_yaxis().set_ticks([])
@@ -131,6 +133,16 @@ def trajectory_to_video(savedir):
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
+def make_gif(savedir):
+    files = [f for f in glob.glob(f"{savedir}/*.jpg")]
+    #print(files)
+    files = sorted(files)
+    frames = [Image.open(image) for image in files]
+    
+    frame_one = frames[0]
+    frame_one.save(savedir+".gif", format="GIF", append_images=frames,
+               save_all=True, duration=250, loop=0)
+
 
 if __name__ == '__main__':
     import argparse
@@ -176,4 +188,4 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model, data_samples = get_ckpt_model_and_data(args)
     save_trajectory(model, data_samples, args.save, ntimes=args.ntimes, memory=args.memory, device=device)
-    trajectory_to_video(args.save)
+    make_gif(args.save)
